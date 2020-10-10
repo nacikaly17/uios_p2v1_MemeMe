@@ -7,7 +7,10 @@
 
 import UIKit
 
-class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class MainViewController: UIViewController,
+                          UITextFieldDelegate,
+                          UIImagePickerControllerDelegate,
+                          UINavigationControllerDelegate {
 
     // MARK: Outlets
     @IBOutlet weak var imageView: UIImageView!
@@ -18,25 +21,6 @@ class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerCont
     @IBOutlet weak var shareButton: UIBarButtonItem!
     @IBOutlet weak var cancelButton: UIBarButtonItem!
     @IBOutlet weak var constraintForKeyboard: NSLayoutConstraint!
-    
-    // MARK: Properties
-    enum PickerType: Int{case camera=0, album }
-    let textTOP = "TOP"
-    let textBOTTOM = "BOTTOM"
-    
-    // struct for Meme object to share
-    struct Meme {
-        var topText: String
-        var bottomText: String
-        var originalImage: UIImage
-        var memedImage: UIImage
-    }
-    
-    let memeTextAttributes:[NSAttributedString.Key:Any] = [
-        NSAttributedString.Key.strokeColor: UIColor.black,
-        NSAttributedString.Key.foregroundColor: UIColor.white,
-        NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-        NSAttributedString.Key.strokeWidth: 3.0]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -70,20 +54,20 @@ class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerCont
     
     @IBAction func pickImage(_ sender: UIBarButtonItem) {
         // get an image picker controller
-        let ipc = UIImagePickerController()
+        let imagePicker = UIImagePickerController()
         // set the delegate
-        ipc.delegate = self
-        ipc.allowsEditing = false
+        imagePicker.delegate = self
+        imagePicker.allowsEditing = false
         
         // which source should be used
         switch (PickerType(rawValue: sender.tag)!) {
         case .camera:
-            ipc.sourceType = .camera
+            imagePicker.sourceType = .camera
         case .album:
-            ipc.sourceType = .photoLibrary
+            imagePicker.sourceType = .photoLibrary
         }
         // call image picker controller libary
-        present(ipc, animated: true, completion: nil)
+        present(imagePicker, animated: true, completion: nil)
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -109,16 +93,27 @@ class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerCont
     }
     
     @IBAction func shareImage(_ sender: UIBarButtonItem) {
-        // Create the meme object to share with
-        let meme = Meme(
-                    topText: self.textFieldTop.text!,
-                    bottomText: self.textFieldBottom.text!,
-                    originalImage: imageView.image!,
-                    memedImage: generateMemedImage())
+        // generate a memed image
+        let memedImage = generateMemedImage()
+        // define an instance of the ActivityViewController
+        // pass the ActivityViewController a memedImage as an activity item
+        let controller = UIActivityViewController(activityItems: [memedImage], applicationActivities: nil)
+        // present the ActivityViewController
+        present(controller, animated: true, completion: nil)
         // create an activity object
-        let controller = UIActivityViewController(activityItems: [meme], applicationActivities: nil)
-        // present it
-        self.present(controller, animated: true, completion: nil)
+        controller.completionWithItemsHandler = {
+            _, completed, _, _ in
+            if completed {
+                // save
+                // The completionWithItemsHandler should be used here, as per specifications.
+                // It prevents the app from saving memes when the user cancels the action:
+                let _ = Meme(
+                            topText: self.textFieldTop.text!,
+                            bottomText: self.textFieldBottom.text!,
+                            originalImage: self.imageView.image!,
+                            memedImage: memedImage)
+            }
+        }
     }
     
     func generateMemedImage() -> UIImage {
@@ -146,25 +141,27 @@ class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerCont
         // image not picked
         imageView.image = nil
         
-        self.textFieldTop.textAlignment = .center
-        self.textFieldBottom.textAlignment = .center
-        
-        // Text Fields shows default text
-        self.textFieldTop.text = textTOP
-        self.textFieldBottom.text = textBOTTOM
+        setTextFieldAttributes(textFieldTop,text: textTOP)
+        setTextFieldAttributes(textFieldBottom, text: textBOTTOM)
         
     }
     
     func setTextFieldAttributes() {
        
        // set default attributes for TextFields
-       self.textFieldTop.defaultTextAttributes = memeTextAttributes
-       self.textFieldBottom.defaultTextAttributes = memeTextAttributes
-       
-       // Set delegates for TextFields
-       self.textFieldTop.delegate = self
-       self.textFieldBottom.delegate = self
+        setTextFieldAttributes(textFieldTop, text: "")
+        setTextFieldAttributes(textFieldBottom,text:  "")
    }
+    
+    func setTextFieldAttributes(_ textField: UITextField, text: String) {
+        // set attributes
+        textField.defaultTextAttributes = memeTextAttributes
+        textField.delegate = self
+        if(text != ""){
+            textField.textAlignment = .center
+            textField.text = text
+        }
+    }
     
     func checkEditingCompleted(){
         
@@ -226,3 +223,5 @@ class MainViewController: UIViewController,UITextFieldDelegate,UIImagePickerCont
        }
    }
 }
+
+
