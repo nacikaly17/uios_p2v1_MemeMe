@@ -5,6 +5,7 @@
 //  Created by Naci Kalyoncu on 10.10.20.
 //
 
+import Foundation
 import UIKit
 
 // MARK: Properties
@@ -20,10 +21,20 @@ let memeTextAttributes:[NSAttributedString.Key:Any] = [
     NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
     NSAttributedString.Key.strokeWidth: -3.0]
 
+// MARK: - Meme
 // struct for Meme object to share
 struct Meme {
+    
+    // MARK: Properties
+    
     var topText: String
     var bottomText: String
     var originalImage: UIImage
     var memedImage: UIImage
 }
+
+// NotificationCenter extension for Name property
+extension Notification.Name {
+    static let didMemesChanged = Notification.Name("didMemesChanged")
+}
+

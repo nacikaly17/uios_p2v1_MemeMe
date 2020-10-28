@@ -7,11 +7,12 @@
 
 import UIKit
 
-class MainViewController: UIViewController,
+class MemeEditorView: UIViewController,
                           UITextFieldDelegate,
                           UIImagePickerControllerDelegate,
                           UINavigationControllerDelegate {
-
+    // MARK: Properties
+    
     // MARK: Outlets
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var textFieldTop: UITextField!
@@ -21,6 +22,7 @@ class MainViewController: UIViewController,
     @IBOutlet weak var shareButton: UIBarButtonItem!
     @IBOutlet weak var cancelButton: UIBarButtonItem!
     @IBOutlet weak var constraintForKeyboard: NSLayoutConstraint!
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -37,6 +39,7 @@ class MainViewController: UIViewController,
         super.viewWillDisappear(animated)
         unsubscribeFromKeyboardNotifications()
     }
+    
     
     // MARK: Text Field Delegates
     func textFieldDidBeginEditing(_ textField: UITextField) {
@@ -90,8 +93,15 @@ class MainViewController: UIViewController,
     
     @IBAction func cancelEditing(_ sender: UIBarButtonItem) {
         initScreen()
+        dismissAndResign()
     }
     
+    func dismissAndResign() {
+        self.dismiss(animated: true, completion: nil)
+       resignFirstResponder()
+   }
+    
+    // MARK: Save meme to the sentmemes array
     @IBAction func shareImage(_ sender: UIBarButtonItem) {
         // generate a memed image
         let memedImage = generateMemedImage()
@@ -107,14 +117,21 @@ class MainViewController: UIViewController,
                 // save
                 // The completionWithItemsHandler should be used here, as per specifications.
                 // It prevents the app from saving memes when the user cancels the action:
-                let _ = Meme(
+                let meme = Meme(
                             topText: self.textFieldTop.text!,
                             bottomText: self.textFieldBottom.text!,
                             originalImage: self.imageView.image!,
                             memedImage: memedImage)
+                // Add it to the memes array in the Application Delegate
+                let object = UIApplication.shared.delegate
+                let appDelegate = object as! AppDelegate
+                appDelegate.memes.append(meme)
+                NotificationCenter.default.post(name: .didMemesChanged, object: nil)  // notify that memes did change
+                self.dismissAndResign()
             }
         }
     }
+
     
     func generateMemedImage() -> UIImage {
 
